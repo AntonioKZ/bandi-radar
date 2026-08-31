@@ -23,4 +23,7 @@ HTML/CSS/JavaScript + Vercel Functions, zero dipendenze runtime.
 4. Analisi LLM dei requisiti ed eleggibilità.
 5. Auth, multi-tenant e alert.
 
+## Repository
+Standalone repository collegato a Vercel; `main` è il ramo di produzione.
+
 > I dati di esempio servono a validare il prodotto; per uso istruttorio ogni requisito va verificato sulla fonte ufficiale.
