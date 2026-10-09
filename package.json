@@ -1,0 +1,8 @@
+{
+  "name": "bandi-radar-mi",
+  "version": "5.0.0-preview",
+  "private": true,
+  "dependencies": {
+    "pg": "^8.13.1"
+  }
+}
