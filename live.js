@@ -16,18 +16,18 @@
       const state = (o.status || 'da verificare').toUpperCase();
       const closed = /CLOSED|CHIUS|SOSPES|EXHAUST|SCADUT/.test(state);
       return {
-        id: o.id, title: o.title, type: /invest/i.test(o.program || '') ? 'Investimenti' : 'R&S',
-        source: o.source_id || 'Fonte ufficiale', territory: o.territory || [],
+        id: safe(o.id), title: safe(o.title), type: /invest/i.test(o.program || '') ? 'Investimenti' : 'R&S',
+        source: safe(o.source_id || 'Fonte ufficiale'), territory: (o.territory || []).map(safe),
         date: closed ? 'NON CANDIDABILE · ' + state : 'Stato ufficiale: ' + state,
         deadline: o.deadline ? String(o.deadline).slice(0,10) : null,
         grant: o.grant_rate == null ? 'Da verificare' : o.grant_rate + '% (verificare regime)',
         budget: o.budget_eur == null ? 'Da verificare' : Number(o.budget_eur).toLocaleString('it-IT') + ' €',
         beneficiaries: 'Consultare la scheda ufficiale: requisito non ancora strutturato',
-        what: o.summary || 'Descrizione da verificare', expenses: [], partners: 'Da verificare',
-        sectors: o.sectors || [], kw: o.keywords || [], fit: [],
+        what: safe(o.summary || 'Descrizione da verificare'), expenses: [], partners: 'Da verificare',
+        sectors: (o.sectors || []).map(safe), kw: (o.keywords || []).map(safe), fit: [],
         risks: closed ? ['Sportello chiuso o sospeso: non presentare nuove domande'] : ['Verificare requisiti e stato prima della candidatura'],
         next: closed ? 'Monitorare eventuale riapertura' : 'Verificare condizioni ufficiali',
-        url: o.official_url || '#', fresh: false, officialStatus: state
+        url: /^https:\/\//i.test(o.official_url || '') ? safe(o.official_url) : '#', fresh: false, officialStatus: state
       };
     });
     sourceRegistry = data.sources.map(s => ({
