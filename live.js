@@ -5,6 +5,7 @@
   banner.style.cssText = 'padding:12px;margin:12px 0;border:1px solid #ccd5e1;border-radius:10px;font-size:13px';
   document.querySelector('.top').after(banner);
   banner.textContent = 'Connessione ai dati Neon in corso…';
+  const safeUrl = (v) => { try { const u = new URL(String(v)); return u.protocol === 'https:' ? u.href : '#'; } catch { return '#'; } };
   const safe = (v) => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   try {
     const response = await fetch('/api/radar', {cache:'no-store'});
@@ -27,11 +28,11 @@
         sectors: (o.sectors || []).map(safe), kw: (o.keywords || []).map(safe), fit: [],
         risks: closed ? ['Sportello chiuso o sospeso: non presentare nuove domande'] : ['Verificare requisiti e stato prima della candidatura'],
         next: closed ? 'Monitorare eventuale riapertura' : 'Verificare condizioni ufficiali',
-        url: /^https:\/\//i.test(o.official_url || '') ? safe(o.official_url) : '#', fresh: false, officialStatus: state
+        url: safe(safeUrl(o.official_url)), fresh: false, officialStatus: state
       };
     });
     sourceRegistry = data.sources.map(s => ({
-      n:s.name,s:s.scope || '',u:s.official_url || '#',d:s.category || '',
+      n:s.name,s:s.scope || '',u:safeUrl(s.official_url),d:s.category || '',
       status:s.scan_status === 'scanned' ? 'Scansionata' : 'Da verificare',
       last:scanMap.has(s.id) ? new Date(scanMap.get(s.id)).toLocaleString('it-IT',{timeZone:'Europe/Rome'}) : 'non disponibile',
       found:data.opportunities.filter(o=>o.source_id===s.id).length
