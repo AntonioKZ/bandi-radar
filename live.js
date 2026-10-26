@@ -33,7 +33,7 @@
     });
     sourceRegistry = data.sources.map(s => ({
       n:s.name,s:s.scope || '',u:safeUrl(s.official_url),d:s.category || '',
-      status:s.scan_status === 'scanned' ? 'Scansionata' : 'Da verificare',
+      status:scanMap.has(s.id) ? 'Scansionata' : 'Da verificare',
       last:scanMap.has(s.id) ? new Date(scanMap.get(s.id)).toLocaleString('it-IT',{timeZone:'Europe/Rome'}) : 'non disponibile',
       found:data.opportunities.filter(o=>o.source_id===s.id).length
     }));
