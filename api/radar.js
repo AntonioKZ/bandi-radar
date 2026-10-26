@@ -1,4 +1,5 @@
 const { Pool } = require('pg');
+const allowedMethods = new Set(['GET']);
 let pool;
 function db() {
   if (!process.env.DATABASE_URL) return null;
@@ -9,7 +10,7 @@ module.exports = async (req, res) => {
   res.setHeader('Cache-Control', 'no-store');
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
-  if (req.method !== 'GET') return res.status(405).json({ error: 'method_not_allowed' });
+  if (!allowedMethods.has(req.method)) return res.status(405).json({ error: 'method_not_allowed' });
   const client = db();
   if (!client) return res.status(503).json({ error: 'database_not_configured' });
   try {
