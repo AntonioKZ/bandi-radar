@@ -12,7 +12,7 @@
     const data = await response.json();
     if (!Array.isArray(data.opportunities) || !Array.isArray(data.sources)) throw new Error('invalid_schema');
     const scanMap = new Map((data.lastScans || []).map(x => [x.source_id,x.last_scan]));
-    grants = data.opportunities.map(o => {
+    grants = data.opportunities.filter(o => typeof o.id === 'string' && o.id.length > 0).map(o => {
       const state = (o.status || 'da verificare').toUpperCase();
       const closed = /CLOSED|CHIUS|SOSPES|EXHAUST|SCADUT/.test(state);
       return {
