@@ -13,3 +13,5 @@ La raccolta HTML è discovery parziale, non certificazione di copertura: pagine 
 
 ## Verifica
 Test Node senza dipendenze: allowlist, redirect, scoperta automotive pregressa, deduplicazione, log fallimento/parziale, isolamento record curati, frontend/storage/date/decisioni. Nessuna migrazione distruttiva o modifica schema.
+
+Finale 7.0.1: scrittura batch per fonte (una query anziché fino a 150), registro avvio prima della rete per rendere visibili job interrotti; gestione guasto connessione; 13 test superati e SQL batch/deduplicazione verificati su branch Neon isolata.

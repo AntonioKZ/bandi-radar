@@ -33,14 +33,14 @@
     });
     sourceRegistry = data.sources.map(s => ({
       n:s.name,s:s.scope || '',u:safeUrl(s.official_url),d:s.category || '',
-      status: !scanMap.has(s.id) ? 'Mai verificata' : Date.now()-Date.parse(scanMap.get(s.id).last_scan)>8*86400000 ? 'Controllo obsoleto' : scanMap.get(s.id).status==='partial' ? 'Copertura parziale' : /failed|error/.test(scanMap.get(s.id).status) ? 'Errore' : 'Controllo registrato (copertura non certificata)',
+      status: !scanMap.has(s.id) ? 'Mai verificata' : Date.now()-Date.parse(scanMap.get(s.id).last_scan)>8*86400000 ? 'Controllo obsoleto' : scanMap.get(s.id).status==='running' ? 'In corso o interrotta: esito non disponibile' : scanMap.get(s.id).status==='partial' ? 'Copertura parziale' : /failed|error/.test(scanMap.get(s.id).status) ? 'Errore' : 'Controllo registrato (copertura non certificata)',
       last:scanMap.has(s.id) ? new Date(scanMap.get(s.id).last_scan).toLocaleString('it-IT',{timeZone:'Europe/Rome'}) : 'non disponibile',
       found:data.opportunities.filter(o=>o.source_id===s.id).length
     }));
     document.getElementById('sourcegrid').innerHTML = sourceRegistry.map(x =>
       '<div class="source"><b>'+safe(x.n)+'</b><p>'+safe(x.status)+'</p><div class="muted">'+safe(x.s)+' · ultima scansione '+safe(x.last)+'</div><p>'+safe(x.d)+'</p><a target="_blank" rel="noopener noreferrer" href="'+safe(x.u)+'">Fonte ufficiale ↗</a></div>'
     ).join('');
-    banner.textContent = 'Versione 7.0 · Dati live Neon · '+grants.length+' opportunità · risposta '+new Date(data.servedAt).toLocaleString('it-IT',{timeZone:'Europe/Rome'})+'. '+(data.truncated?'ATTENZIONE: elenco limitato a 500 record. ':'')+'Le segnalazioni automatiche richiedono verifica; la copertura delle fonti può essere parziale.';
+    banner.textContent = 'Versione 7.0.1 · Dati live Neon · '+grants.length+' opportunità · risposta '+new Date(data.servedAt).toLocaleString('it-IT',{timeZone:'Europe/Rome'})+'. '+(data.truncated?'ATTENZIONE: elenco limitato a 500 record. ':'')+'Le segnalazioni automatiche richiedono verifica; la copertura delle fonti può essere parziale.';
     const expense=document.getElementById('expense');expense.value='';expense.disabled=true;expense.title='Spese non ancora strutturate nei record: consultare le schede ufficiali.';
     render();
   } catch (e) {
