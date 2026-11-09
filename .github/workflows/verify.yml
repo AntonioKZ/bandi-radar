@@ -1,0 +1,18 @@
+name: Verify Radar
+on:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  regression:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Run regression tests
+        run: node --test tests/*.test.js
+      - name: Check JavaScript syntax
+        run: find api lib tests -name '*.js' -print0 | xargs -0 -n1 node --check
