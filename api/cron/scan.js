@@ -1,21 +1,25 @@
-const sources=[
-  {name:'MIMIT',url:'https://www.mimit.gov.it/it/incentivi'},
-  {name:'Invitalia',url:'https://www.invitalia.it/per-le-imprese/incentivi-e-strumenti'},
-  {name:'Regione Lombardia',url:'https://www.bandi.regione.lombardia.it/servizi/servizio/bandi/ricerca-innovazione'},
-  {name:'Open Innovation Lombardia',url:'https://www.openinnovation.regione.lombardia.it/it/bandi-e-sperimentazioni'}
-];
+const {Pool}=require('pg');
+const {timingSafeEqual}=require('node:crypto');
+const {scanSource}=require('../../lib/collector');
+let pool;
 module.exports=async function handler(req,res){
-  const started=new Date().toISOString();
+ res.setHeader('Cache-Control','no-store');
+ if(!['GET','POST'].includes(req.method))return res.status(405).json({error:'method_not_allowed'});
+ const secret=process.env.CRON_SECRET,auth=req.headers.authorization||'';
+ if(!secret)return res.status(503).json({error:'scan_secret_not_configured'});
+ const expected=Buffer.from('Bearer '+secret),actual=Buffer.from(auth);
+ if(actual.length!==expected.length||!timingSafeEqual(actual,expected))return res.status(401).json({error:'unauthorized'});
+ if(!process.env.DATABASE_URL)return res.status(503).json({error:'database_not_configured'});
+ pool ||= new Pool({connectionString:process.env.DATABASE_URL,max:2,connectionTimeoutMillis:5000,idleTimeoutMillis:10000,statement_timeout:15000});
+ const client=await pool.connect();let locked=false;
+ try{
+  locked=(await client.query('SELECT pg_try_advisory_lock(7092026) AS locked')).rows[0].locked;
+  if(!locked)return res.status(409).json({error:'scan_already_running'});
+  const {rows}=await client.query('SELECT id,official_url FROM sources ORDER BY priority DESC,id');
   const results=[];
-  for(const s of sources){
-    try{
-      const r=await fetch(s.url,{headers:{'user-agent':'Mozilla/5.0 BandiRadarMI/1.0','accept':'text/html,application/xhtml+xml','accept-language':'it-IT,it;q=0.9,en;q=0.8'},redirect:'follow'});
-      const text=await r.text();
-      results.push({source:s.name,reachable:r.ok,status:r.status,bytes:text.length,checkedAt:new Date().toISOString()});
-    }catch(e){results.push({source:s.name,reachable:false,status:null,error:String(e),checkedAt:new Date().toISOString()});}
-  }
-  const reachable=results.filter(x=>x.reachable).length;
-  const degraded=reachable<results.length;
-  res.setHeader('Cache-Control','no-store');
-  res.status(200).json({ok:reachable>0,degraded,reachable,total:results.length,started,finished:new Date().toISOString(),results,note:'Scan HTTP reale. Una fonte può bloccare richieste server-to-server senza invalidare l’intero job. La persistenza automatica su Neon richiede DATABASE_URL server-side.'});
-}
+  // Bounded parallel network work; one client serializes SQL safely.
+  for(let i=0;i<rows.length;i+=3)results.push(...await Promise.all(rows.slice(i,i+3).map(s=>scanSource(client,s))));
+  return res.status(200).json({version:'7.0.0',complete:false,results,notice:'Scoperta da elenchi ufficiali: copertura parziale, dettagli da verificare.'});
+ }catch(e){console.error('scan_failed',e.code||'unknown');return res.status(503).json({error:'scan_failed'});}
+ finally{if(locked)await client.query('SELECT pg_advisory_unlock(7092026)').catch(()=>{});client.release();}
+};

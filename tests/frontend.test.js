@@ -1,0 +1,7 @@
+const {test}=require('node:test');const assert=require('node:assert/strict');const vm=require('node:vm');const fs=require('node:fs');
+function context(){const elements=new Map();const context={localStorage:{getItem(){throw Error('storage disabled')}},document:{getElementById(id){if(!elements.has(id))elements.set(id,{value:({territory:'Tutti i territori',min:'0'})[id]||'',innerHTML:'',textContent:''});return elements.get(id)}},grants:[],sourceRegistry:[],setTimeout,clearTimeout,Date};vm.createContext(context);vm.runInContext(fs.readFileSync(require.resolve('../app.js'),'utf8'),context);return context;}
+test('frontend boots when local storage unavailable',()=>assert.ok(context()));
+test('unverified candidates cannot be recommended for applying',()=>{const c=context();assert.equal(vm.runInContext("classify({officialStatus:'REVIEW'}) .k",c),'VERIFICARE')});
+test('recorded partner decision is retained',()=>{const c=context();assert.equal(vm.runInContext("classify({what:'PARTNER · Priorità A',program:'R&S',officialStatus:'OPEN'}) .k",c),'PARTNER')});
+test('ISO deadlines are parsed instead of invalid concatenation',()=>{const c=context();assert.equal(vm.runInContext("Number.isFinite(days({deadline:'2027-02-02T00:00:00.000Z'}))",c),true)});
+test('closed measures override recorded positive decisions',()=>{const c=context();assert.equal(vm.runInContext("classify({what:'CANDIDARSI',program:'R&S',officialStatus:'CLOSED'}) .k",c),'SCARTARE')});

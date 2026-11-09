@@ -12,38 +12,39 @@
     if (!response.ok) throw new Error('HTTP ' + response.status);
     const data = await response.json();
     if (!Array.isArray(data.opportunities) || !Array.isArray(data.sources)) throw new Error('invalid_schema');
-    const scanMap = new Map((data.lastScans || []).map(x => [x.source_id,x.last_scan]));
+    const scanMap = new Map((data.lastScans || []).map(x => [x.source_id,x]));
     grants = data.opportunities.filter(o => typeof o.id === 'string' && /^[a-zA-Z0-9_-]{1,120}$/.test(o.id)).map(o => {
       const state = (o.status || 'da verificare').toUpperCase();
       const closed = /CLOSED|CHIUS|SOSPES|EXHAUST|SCADUT/.test(state);
       return {
-        id: safe(o.id), title: safe(o.title), type: /invest/i.test(o.program || '') ? 'Investimenti' : 'R&S',
+        id: safe(o.id), title: safe(o.title), program:safe(o.program||''), type: /formaz/i.test(o.program || '') ? 'Formazione' : /invest/i.test(o.program || '') ? 'Investimenti' : 'R&S',
         source: safe(o.source_id || 'Fonte ufficiale'), territory: (o.territory || []).map(safe),
         date: closed ? 'NON CANDIDABILE · ' + state : 'Stato ufficiale: ' + state,
         deadline: o.deadline ? String(o.deadline).slice(0,10) : null,
-        grant: o.grant_rate == null ? 'Da verificare' : o.grant_rate + '% (verificare regime)',
-        budget: o.budget_eur == null ? 'Da verificare' : Number(o.budget_eur).toLocaleString('it-IT') + ' €',
+        grant: o.grant_rate == null ? 'Da verificare' : (Number(o.grant_rate)>0 && Number(o.grant_rate)<1 ? Number(o.grant_rate)*100 : Number(o.grant_rate)) + '% (verificare regime)',
+        budget: o.budget_eur == null ? 'Da verificare' : Number(o.budget_eur).toLocaleString('it-IT') + ' € (importo registrato: verificare se dotazione o progetto)',
         beneficiaries: 'Consultare la scheda ufficiale: requisito non ancora strutturato',
         what: safe(o.summary || 'Descrizione da verificare'), expenses: [], partners: 'Da verificare',
         sectors: (o.sectors || []).map(safe), kw: (o.keywords || []).map(safe), fit: [],
         risks: closed ? ['Sportello chiuso o sospeso: non presentare nuove domande'] : ['Verificare requisiti e stato prima della candidatura'],
         next: closed ? 'Monitorare eventuale riapertura' : 'Verificare condizioni ufficiali',
-        url: safe(safeUrl(o.official_url)), fresh: false, officialStatus: state
+        url: safe(safeUrl(o.official_url)), fresh: Boolean(o.first_seen_at && Date.now()-Date.parse(o.first_seen_at)>=0 && Date.now()-Date.parse(o.first_seen_at)<7*86400000), officialStatus: state
       };
     });
     sourceRegistry = data.sources.map(s => ({
       n:s.name,s:s.scope || '',u:safeUrl(s.official_url),d:s.category || '',
-      status:scanMap.has(s.id) ? 'Scansionata' : 'Da verificare',
-      last:scanMap.has(s.id) ? new Date(scanMap.get(s.id)).toLocaleString('it-IT',{timeZone:'Europe/Rome'}) : 'non disponibile',
+      status: !scanMap.has(s.id) ? 'Mai verificata' : Date.now()-Date.parse(scanMap.get(s.id).last_scan)>8*86400000 ? 'Controllo obsoleto' : scanMap.get(s.id).status==='partial' ? 'Copertura parziale' : /failed|error/.test(scanMap.get(s.id).status) ? 'Errore' : 'Controllo registrato (copertura non certificata)',
+      last:scanMap.has(s.id) ? new Date(scanMap.get(s.id).last_scan).toLocaleString('it-IT',{timeZone:'Europe/Rome'}) : 'non disponibile',
       found:data.opportunities.filter(o=>o.source_id===s.id).length
     }));
     document.getElementById('sourcegrid').innerHTML = sourceRegistry.map(x =>
-      '<div class="source"><b>'+safe(x.n)+'</b><div class="muted">'+safe(x.s)+' · ultima scansione '+safe(x.last)+'</div><p>'+safe(x.d)+'</p><a target="_blank" rel="noopener noreferrer" href="'+safe(x.u)+'">Fonte ufficiale ↗</a></div>'
+      '<div class="source"><b>'+safe(x.n)+'</b><p>'+safe(x.status)+'</p><div class="muted">'+safe(x.s)+' · ultima scansione '+safe(x.last)+'</div><p>'+safe(x.d)+'</p><a target="_blank" rel="noopener noreferrer" href="'+safe(x.u)+'">Fonte ufficiale ↗</a></div>'
     ).join('');
-    banner.textContent = 'Dati live Neon · '+grants.length+' opportunità · risposta '+new Date(data.servedAt).toLocaleString('it-IT',{timeZone:'Europe/Rome'})+'. Stato e requisiti non verificati sono indicati esplicitamente.';
+    banner.textContent = 'Versione 7.0 · Dati live Neon · '+grants.length+' opportunità · risposta '+new Date(data.servedAt).toLocaleString('it-IT',{timeZone:'Europe/Rome'})+'. '+(data.truncated?'ATTENZIONE: elenco limitato a 500 record. ':'')+'Le segnalazioni automatiche richiedono verifica; la copertura delle fonti può essere parziale.';
+    const expense=document.getElementById('expense');expense.value='';expense.disabled=true;expense.title='Spese non ancora strutturate nei record: consultare le schede ufficiali.';
     render();
   } catch (e) {
-    banner.textContent = 'ATTENZIONE: database non raggiungibile. Sono visibili dati dimostrativi locali NON aggiornati; non utilizzarli per decidere candidature.';
+    grants=[];sourceRegistry=[];render();document.getElementById('sourcegrid').textContent='Stato delle fonti non disponibile.';banner.textContent = 'Database non raggiungibile: elenco non disponibile. Riprovare più tardi.';
     console.warn('live_radar_unavailable', e.message);
   }
 })();
