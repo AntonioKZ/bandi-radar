@@ -1,6 +1,6 @@
 {
   "name": "bandi-radar-mi",
-  "version": "7.2.0",
+  "version": "7.3.0",
   "private": true,
   "dependencies": {
     "pg": "^8.13.1"

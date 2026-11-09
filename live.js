@@ -62,7 +62,7 @@
     document.getElementById('sourcegrid').innerHTML = sourceRegistry.map(x =>
       '<div class="source"><b>'+safe(x.n)+'</b><p>'+safe(x.status)+'</p><div class="muted">'+safe(x.s)+' · ultima scansione '+safe(x.last)+'</div><p>'+safe(x.d)+'</p><a target="_blank" rel="noopener noreferrer" href="'+safe(x.u)+'">Fonte ufficiale ↗</a></div>'
     ).join('');
-    banner.textContent = 'Versione 7.2 · Dati live Neon · '+grants.length+' opportunità · risposta '+new Date(data.servedAt).toLocaleString('it-IT',{timeZone:'Europe/Rome'})+'. '+(data.truncated?'ATTENZIONE: caricamento limitato a 5.000 record. ':'')+'Le segnalazioni automatiche richiedono verifica; la copertura delle fonti può essere parziale.';
+    banner.textContent = 'Versione 7.3 · Dati live Neon · '+grants.length+' opportunità · risposta '+new Date(data.servedAt).toLocaleString('it-IT',{timeZone:'Europe/Rome'})+'. '+(data.truncated?'ATTENZIONE: caricamento limitato a 5.000 record. ':'')+'Le segnalazioni automatiche richiedono verifica; la copertura delle fonti può essere parziale.';
     const expense=document.getElementById('expense');expense.value='';expense.disabled=true;expense.title='Spese non ancora strutturate nei record: consultare le schede ufficiali.';
     render();
   } catch (e) {

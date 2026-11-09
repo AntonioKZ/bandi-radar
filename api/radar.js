@@ -22,7 +22,7 @@ module.exports = async (req, res) => {
       client.query('SELECT id, name, scope, official_url, category, scan_status, priority, updated_at FROM sources ORDER BY priority NULLS LAST, name'),
       client.query('SELECT DISTINCT ON (source_id) source_id, COALESCE(finished_at,started_at) AS last_scan, status, discovered, inserted, updated FROM scan_runs WHERE source_id IS NOT NULL ORDER BY source_id, started_at DESC, id DESC')
     ]);
-    return res.status(200).json({ version: '7.2.0', nextOffset: opportunities.rows.length>500?offset+500:null, truncated: opportunities.rows.length > 500, opportunities: opportunities.rows.slice(0,500), sources: sources.rows, lastScans: scans.rows, servedAt: new Date().toISOString() });
+    return res.status(200).json({ version: '7.3.0', nextOffset: opportunities.rows.length>500?offset+500:null, truncated: opportunities.rows.length > 500, opportunities: opportunities.rows.slice(0,500), sources: sources.rows, lastScans: scans.rows, servedAt: new Date().toISOString() });
   } catch (err) {
     console.error('read_api_failed', err.code || 'unknown');
     return res.status(503).json({ error: 'database_unavailable' });

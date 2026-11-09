@@ -61,3 +61,11 @@ body{font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased}
 @media(max-width:760px){.wrap{padding:18px 15px 44px}.panel{padding:17px}.grid,.sourcegrid,.cols{grid-template-columns:1fr}.toolbar{display:block}.tabs{margin-top:15px}.results-hint{display:none}.cards{grid-template-columns:repeat(2,minmax(0,1fr))}.quick{grid-template-columns:repeat(2,minmax(0,1fr))}.decisionbar{flex-wrap:nowrap;overflow-x:auto;padding-bottom:14px}.decisionbar .tab{white-space:nowrap;flex-shrink:0}.modal{padding:20px}}
 @media(max-width:480px){.top h1{font-size:29px}.actions{display:grid;grid-template-columns:1fr 1fr}.actions .btn{padding:9px 8px;font-size:12px}.cards{gap:9px}.card{padding:12px;min-height:96px}.card .muted{font-size:12px}.metric{font-size:25px}.filters{grid-template-columns:1fr}.quick{grid-template-columns:1fr}.grant{padding:15px}.grant-head{gap:9px}.grant h3{font-size:17px}.score{width:44px;height:44px;font-size:16px}.modal{padding:17px}.decision{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;transition:none!important}}
+
+/* R7.3: origin is visible before the title, without relying on color alone. */
+.provenance{--origin:#42536b;display:flex;flex-wrap:wrap;align-items:center;gap:5px 12px;padding:12px 14px;margin:0 0 15px;background:var(--origin);color:#fff;border-radius:9px;border-left:5px solid rgba(255,255,255,.4)}
+.provenance-label{font-size:10px;letter-spacing:.1em;font-weight:700;opacity:.9}
+.provenance strong{font-size:15px;letter-spacing:.04em;font-weight:850;line-height:1.4}
+.provenance-portal{flex-basis:100%;font-size:12px;line-height:1.45;overflow-wrap:anywhere}
+.provenance-mimit{--origin:#155b63}.provenance-eu{--origin:#163b80;border-left-color:#ffd64d}.provenance-invitalia{--origin:#783654}.provenance-sicilia{--origin:#83500c}.provenance-lombardia{--origin:#246144}
+@media(max-width:480px){.provenance{padding:10px 12px;gap:4px 8px}.provenance strong{font-size:14px}}
