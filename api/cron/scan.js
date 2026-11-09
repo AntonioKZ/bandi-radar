@@ -23,9 +23,9 @@ module.exports=async function handler(req,res){
    batch.forEach((r,j)=>results.push(r.status==='fulfilled'?r.value:{source_id:rows[i+j].id,status:'failed',error:'persistence_failed'}));
   }
   const failed=results.filter(r=>r.status==='failed').length;
-  await client.query('UPDATE scan_runs SET finished_at=now(),status=$2,discovered=$3,inserted=$4,error_message=$5 WHERE id=$1',[lease,failed===results.length?'failed':'partial',results.reduce((n,r)=>n+(r.discovered||0),0),results.reduce((n,r)=>n+(r.inserted||0),0),JSON.stringify({version:'7.1.0',sources:results.length,failed})]);
+  await client.query('UPDATE scan_runs SET finished_at=now(),status=$2,discovered=$3,inserted=$4,error_message=$5 WHERE id=$1',[lease,failed===results.length?'failed':'partial',results.reduce((n,r)=>n+(r.discovered||0),0),results.reduce((n,r)=>n+(r.inserted||0),0),JSON.stringify({version:'7.2.0',sources:results.length,failed})]);
   lease=null;
-  return res.status(failed===results.length?503:200).json({version:'7.1.0',complete:false,results,notice:'Scoperta da elenchi ufficiali: copertura parziale, dettagli da verificare.'});
+  return res.status(failed===results.length?503:200).json({version:'7.2.0',complete:false,results,notice:'Scoperta da elenchi ufficiali: copertura parziale, dettagli da verificare.'});
  }catch(e){console.error('scan_failed',e.code||'unknown');return res.status(503).json({error:'scan_failed'});}
  finally{if(lease&&client)await client.query("UPDATE scan_runs SET finished_at=now(),status='failed',error_message='collector:v7 failed' WHERE id=$1",[lease]).catch(()=>{});if(client)client.release();}
 };

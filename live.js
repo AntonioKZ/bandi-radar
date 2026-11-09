@@ -29,7 +29,7 @@
       const closed = /CLOSED|CHIUS|SOSPES|EXHAUST|SCADUT/.test(state);
       return {
         id: safe(o.id), title: safe(o.title), program:safe(o.program||''), type: /formaz/i.test(o.program || '') ? 'Formazione' : /invest/i.test(o.program || '') ? 'Investimenti' : 'R&S',
-        source: safe(sourceMap.get(o.source_id)?.name || o.source_id || 'Portale non indicato'), sourcePortal: safe(safeUrl(sourceMap.get(o.source_id)?.official_url)), territory: (o.territory || []).map(safe),
+        sourceId: String(o.source_id||''), source: safe(sourceMap.get(o.source_id)?.name || o.source_id || 'Portale non indicato'), sourcePortal: safe(safeUrl(sourceMap.get(o.source_id)?.official_url)), territory: (o.territory || []).map(safe),
         date: closed ? 'NON CANDIDABILE · ' + state : 'Stato registrato: ' + state,
         deadline: o.deadline ? String(o.deadline).slice(0,10) : null,
         grant: o.grant_rate == null ? 'Da verificare' : (Number(o.grant_rate)>0 && Number(o.grant_rate)<1 ? Number(o.grant_rate)*100 : Number(o.grant_rate)) + '% (verificare regime)',
@@ -42,6 +42,13 @@
         url: safe(safeUrl(o.official_url)), fresh: Boolean(o.first_seen_at && Date.now()-Date.parse(o.first_seen_at)>=0 && Date.now()-Date.parse(o.first_seen_at)<7*86400000), officialStatus: state
       };
     });
+    const sourceFilter=document.getElementById('sourceFilter');
+    const previousSource=sourceFilter.value;
+    const counts=new Map();for(const o of grants)counts.set(o.sourceId,(counts.get(o.sourceId)||0)+1);
+    const choices=new Map(data.sources.map(s=>[String(s.id),String(s.name||s.id)]));
+    for(const o of grants)if(!choices.has(o.sourceId))choices.set(o.sourceId,o.sourceId||'Portale non indicato');
+    sourceFilter.innerHTML='<option value="">Tutte le fonti ('+grants.length+')</option>'+[...choices].sort((a,b)=>a[1].localeCompare(b[1],'it')).filter(([id])=>id).map(([id,name])=>'<option value="'+safe(id)+'">'+safe(name)+' ('+(counts.get(id)||0)+')</option>').join('');
+    sourceFilter.value=choices.has(previousSource)?previousSource:'';
     sourceRegistry = data.sources.map(s => ({
       n:s.name,s:s.scope || '',u:safeUrl(s.official_url),d:s.category || '',
       status: !scanMap.has(s.id) ? 'Mai verificata' :
@@ -55,7 +62,7 @@
     document.getElementById('sourcegrid').innerHTML = sourceRegistry.map(x =>
       '<div class="source"><b>'+safe(x.n)+'</b><p>'+safe(x.status)+'</p><div class="muted">'+safe(x.s)+' · ultima scansione '+safe(x.last)+'</div><p>'+safe(x.d)+'</p><a target="_blank" rel="noopener noreferrer" href="'+safe(x.u)+'">Fonte ufficiale ↗</a></div>'
     ).join('');
-    banner.textContent = 'Versione 7.1 · Dati live Neon · '+grants.length+' opportunità · risposta '+new Date(data.servedAt).toLocaleString('it-IT',{timeZone:'Europe/Rome'})+'. '+(data.truncated?'ATTENZIONE: caricamento limitato a 5.000 record. ':'')+'Le segnalazioni automatiche richiedono verifica; la copertura delle fonti può essere parziale.';
+    banner.textContent = 'Versione 7.2 · Dati live Neon · '+grants.length+' opportunità · risposta '+new Date(data.servedAt).toLocaleString('it-IT',{timeZone:'Europe/Rome'})+'. '+(data.truncated?'ATTENZIONE: caricamento limitato a 5.000 record. ':'')+'Le segnalazioni automatiche richiedono verifica; la copertura delle fonti può essere parziale.';
     const expense=document.getElementById('expense');expense.value='';expense.disabled=true;expense.title='Spese non ancora strutturate nei record: consultare le schede ufficiali.';
     render();
   } catch (e) {
