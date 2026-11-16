@@ -10,3 +10,33 @@ test('navigation and unrelated cross-source links are not imported',()=>{const h
 test('pagination follows only same-origin same-path next links',()=>{const html='<a rel="next" href="?start=20">Avanti</a><a rel="next" href="https://evil.test/?start=2">Next</a><a rel="next" href="/another?start=20">Next</a>';assert.deepEqual(nextPages(html,'https://www.mimit.gov.it/it/incentivi'),['https://www.mimit.gov.it/it/incentivi?start=20'])});
 test('collector discovers automotive on second page and logs bounded coverage',async()=>{const calls=[],db={query:async(q,v)=>{calls.push([q,v]);return {rows:[{id:1}],rowCount:1}}};let requests=0;const fetcher=async url=>{requests++;return new Response(url.includes('start=20')?'<a href="/it/incentivi/automotive">Accordi innovazione automotive</a>':'<a rel="next" href="?start=20">Avanti</a>',{headers:{'content-type':'text/html'}})};const r=await scanSource(db,{id:'mimit',official_url:'https://www.mimit.gov.it/it/incentivi'},fetcher);assert.equal(requests,2);assert.equal(r.discovered,1);assert.equal(r.pages,2);assert.equal(r.status,'partial')});
 test('second-page failure retains first-page discoveries with explicit error',async()=>{const calls=[],db={query:async(q,v)=>{calls.push([q,v]);return {rows:[{id:1}],rowCount:1}}};const fetcher=async url=>url.includes('start=20')?new Response('blocked',{status:403}):new Response('<a href="/it/incentivi/automotive">Accordi innovazione automotive</a><a rel="next" href="?start=20">Avanti</a>',{headers:{'content-type':'text/html'}});const r=await scanSource(db,{id:'mimit',official_url:'https://www.mimit.gov.it/it/incentivi'},fetcher);assert.equal(r.inserted,1);const update=calls.find(([q])=>q.startsWith('UPDATE scan_runs'));assert.match(update[1][4],/http_403/)});
+
+test('regional source retains Open Innovation notices and follows regional pagination', () => {
+ const {SICILY_SOURCE}=require('../lib/monitored-pages');
+ const html='<a href="/la-regione-informa/open-innovation-sicilia">OPEN INNOVATION SICILIA - Avvisi di selezione</a>'+
+   '<a href="/la-regione-informa/telelavoro">Telelavoro domiciliare</a>'+
+   '<a href="?f%5B0%5D=group%3A14&page=1">Pagina successiva</a>';
+ assert.equal(extract(html,SICILY_SOURCE.url).length,1);
+ assert.equal(nextPages(html,SICILY_SOURCE.url).length,1);
+});
+
+test('detail changes are recorded after a baseline and unchanged content does not repeat the event', async () => {
+ const {SICILY_SOURCE}=require('../lib/monitored-pages');
+ let report;
+ let detail='Presentazione domande 30 novembre';
+ const db={query:async(q,v)=>{
+  if(q.startsWith('SELECT substring'))return {rows:[{report}]};
+  if(q.startsWith('UPDATE scan_runs'))report=JSON.parse(v[4].slice(5));
+  return {rows:[{id:1}],rowCount:0};
+ }};
+ const fetcher=async url=>new Response(url.includes('?')?
+  '<a href="/la-regione-informa/open-innovation-sicilia">OPEN INNOVATION SICILIA - Avvisi di selezione</a>':
+  '<main><h1>Open Innovation Sicilia</h1><p>'+('Modalità ufficiali di presentazione delle domande di partecipazione. '.repeat(3))+detail+'</p></main>',
+  {headers:{'content-type':'text/html'}});
+ const scan=()=>scanSource(db,{id:SICILY_SOURCE.id,official_url:SICILY_SOURCE.url},fetcher,{monitorDetails:true});
+ assert.equal((await scan()).updated,0);
+ detail='Presentazione domande 15 dicembre';
+ assert.equal((await scan()).updated,1);
+ assert.equal(report.changes[0].title,'Open Innovation Sicilia');
+ assert.equal((await scan()).updated,0);
+});

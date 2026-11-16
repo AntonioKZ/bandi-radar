@@ -49,6 +49,7 @@
     for(const o of grants)if(!choices.has(o.sourceId))choices.set(o.sourceId,o.sourceId||'Portale non indicato');
     sourceFilter.innerHTML='<option value="">Tutte le fonti ('+grants.length+')</option>'+[...choices].sort((a,b)=>a[1].localeCompare(b[1],'it')).filter(([id])=>id).map(([id,name])=>'<option value="'+safe(id)+'">'+safe(name)+' ('+(counts.get(id)||0)+')</option>').join('');
     sourceFilter.value=choices.has(previousSource)?previousSource:'';
+    const formatDate = value => value ? new Date(value).toLocaleString('it-IT',{timeZone:'Europe/Rome'}) : 'non disponibile';
     sourceRegistry = data.sources.map(s => ({
       n:s.name,s:s.scope || '',u:safeUrl(s.official_url),d:s.category || '',
       status: !scanMap.has(s.id) ? 'Mai verificata' :
@@ -57,12 +58,24 @@
         scanMap.get(s.id).status==='partial' ? 'Copertura parziale' : 'Controllo registrato (copertura non certificata)')+
         (Date.now()-Date.parse(scanMap.get(s.id).last_scan)>2*86400000?' · controllo obsoleto':''),
       last:scanMap.has(s.id) ? new Date(scanMap.get(s.id).last_scan).toLocaleString('it-IT',{timeZone:'Europe/Rome'}) : 'non disponibile',
-      found:data.opportunities.filter(o=>o.source_id===s.id).length
+      readable:formatDate(scanMap.get(s.id)?.last_readable),
+      recent:Date.now()-Date.parse(scanMap.get(s.id)?.last_readable) <= 2*86400000,
+      discovered:scanMap.get(s.id)?.discovered,
+      inserted:scanMap.get(s.id)?.inserted,
+      pages:scanMap.get(s.id)?.pages,
+      issues:scanMap.get(s.id)?.issues?.length || 0
     }));
     document.getElementById('sourcegrid').innerHTML = sourceRegistry.map(x =>
-      '<div class="source"><b>'+safe(x.n)+'</b><p>'+safe(x.status)+'</p><div class="muted">'+safe(x.s)+' · ultima scansione '+safe(x.last)+'</div><p>'+safe(x.d)+'</p><a target="_blank" rel="noopener noreferrer" href="'+safe(x.u)+'">Fonte ufficiale ↗</a></div>'
+      '<div class="source"><b>'+safe(x.n)+'</b><p>'+safe(x.status)+'</p><div class="muted">'+safe(x.s)+' · ultima scansione '+safe(x.last)+'</div><p class="muted">Ultima lettura utile '+safe(x.readable)+'</p>'+
+      (x.pages==null?'':'<p>'+safe(x.pages)+' pagine lette · '+safe(x.discovered)+' rilevati · '+safe(x.inserted)+' nuovi</p>')+(x.issues?'<p>Problemi rilevati durante l’ultimo tentativo: '+safe(x.issues)+'</p>':'')+'<p>'+safe(x.d)+'</p><a target="_blank" rel="noopener noreferrer" href="'+safe(x.u)+'">Fonte ufficiale ↗</a></div>'
     ).join('');
-    banner.textContent = 'Versione 7.3 · Dati live Neon · '+grants.length+' opportunità · risposta '+new Date(data.servedAt).toLocaleString('it-IT',{timeZone:'Europe/Rome'})+'. '+(data.truncated?'ATTENZIONE: caricamento limitato a 5.000 record. ':'')+'Le segnalazioni automatiche richiedono verifica; la copertura delle fonti può essere parziale.';
+    const changes=(data.sourceChanges || []).flatMap(run => (run.changes || []).map(item =>
+      '<li><a href="'+safe(safeUrl(item.url))+'" target="_blank" rel="noopener noreferrer">'+
+      safe(item.title || item.url)+'</a> · '+safe(formatDate(run.finished_at))+'</li>'
+    ));
+    const history=document.getElementById('source-history');
+    if(history)history.innerHTML=changes.length?'<ul>'+changes.join('')+'</ul>':'Nessuna variazione rilevata nelle pagine monitorate.';
+    banner.textContent = 'Versione 7.4 · Dati live Neon · '+grants.length+' opportunità · risposta '+new Date(data.servedAt).toLocaleString('it-IT',{timeZone:'Europe/Rome'})+'. '+(data.truncated?'ATTENZIONE: caricamento limitato a 5.000 record. ':'')+'Le segnalazioni automatiche richiedono verifica; la copertura delle fonti può essere parziale.';
     const expense=document.getElementById('expense');expense.value='';expense.disabled=true;expense.title='Spese non ancora strutturate nei record: consultare le schede ufficiali.';
     render();
   } catch (e) {

@@ -17,12 +17,20 @@ module.exports = async (req, res) => {
   const client = db();
   if (!client) return res.status(503).json({ error: 'database_not_configured' });
   try {
-    const [opportunities, sources, scans] = await Promise.all([
+    const [opportunities, sources, scans, history] = await Promise.all([
       client.query('SELECT id, source_id, title, official_url, territory, deadline, status, budget_eur, grant_rate, program, summary, sectors, keywords, first_seen_at, last_seen_at FROM opportunities ORDER BY id LIMIT 501 OFFSET $1', [offset]),
       client.query('SELECT id, name, scope, official_url, category, scan_status, priority, updated_at FROM sources ORDER BY priority NULLS LAST, name'),
-      client.query('SELECT DISTINCT ON (source_id) source_id, COALESCE(finished_at,started_at) AS last_scan, status, discovered, inserted, updated FROM scan_runs WHERE source_id IS NOT NULL ORDER BY source_id, started_at DESC, id DESC')
+      client.query(`SELECT DISTINCT ON (source_id) source_id, COALESCE(finished_at,started_at) AS last_scan,
+        status, discovered, inserted, updated,
+        max(CASE WHEN status IN ('success','completed','ok') OR (status='partial' AND discovered>0) THEN finished_at END) OVER (PARTITION BY source_id) AS last_readable,
+        CASE WHEN left(error_message,5)='R7.4 ' THEN substring(error_message from 6)::jsonb->'pages' END AS pages,
+        CASE WHEN left(error_message,5)='R7.4 ' THEN substring(error_message from 6)::jsonb->'errors' END AS issues
+        FROM scan_runs WHERE source_id IS NOT NULL ORDER BY source_id, started_at DESC, id DESC`),
+      offset === 0 ? client.query(`SELECT source_id, finished_at, substring(error_message from 6)::jsonb->'changes' AS changes
+        FROM scan_runs WHERE source_id IS NOT NULL AND updated>0 AND left(error_message,5)='R7.4 '
+        ORDER BY finished_at DESC NULLS LAST,id DESC LIMIT 30`) : { rows: [] }
     ]);
-    return res.status(200).json({ version: '7.3.0', nextOffset: opportunities.rows.length>500?offset+500:null, truncated: opportunities.rows.length > 500, opportunities: opportunities.rows.slice(0,500), sources: sources.rows, lastScans: scans.rows, servedAt: new Date().toISOString() });
+    return res.status(200).json({ version: '7.4.0', nextOffset: opportunities.rows.length>500?offset+500:null, truncated: opportunities.rows.length > 500, opportunities: opportunities.rows.slice(0,500), sources: sources.rows, lastScans: scans.rows, sourceChanges: history.rows, servedAt: new Date().toISOString() });
   } catch (err) {
     console.error('read_api_failed', err.code || 'unknown');
     return res.status(503).json({ error: 'database_unavailable' });
