@@ -20,12 +20,12 @@ test('deadline order keeps missing dates at the end and supports rolling windows
  const order=c.document.getElementById('deadlineOrder');
  const ids=()=>{vm.runInContext('render()',c);return Array.from(c.document.getElementById('grantGrid').innerHTML.matchAll(/detail\('([^']+)'\)/g),match=>match[1]);};
  order.value='earliest';
- assert.deepEqual(ids(),['past','today','soon','later','missing']);
+ assert.deepEqual(ids(),['today','soon','later','missing']);
  filter.value='7';
  assert.deepEqual(ids(),['today','soon']);
  filter.value='';
  order.value='latest';
- assert.deepEqual(ids(),['later','soon','today','past','missing']);
+ assert.deepEqual(ids(),['later','soon','today','missing']);
  filter.value='unknown';
  assert.deepEqual(ids(),['missing']);
 });
@@ -41,4 +41,25 @@ test('classifies Sicilian notices separately from funding and unverified candida
  assert.equal(kind('Avviso STEP - proroga dei termini'),'Proroga o riapertura');
  assert.equal(kind('OPEN INNOVATION SICILIA - Avvisi per la selezione'),'Segnalazione da verificare');
  assert.equal(kind('Accordi per l’innovazione Automotive','OPEN'),'Bando o misura');
+});
+
+test('archives past deadlines and funding exhaustion without duplicating active results',()=>{
+ const c=context();
+ const item=(id,deadline,officialStatus,what='')=>({id,deadline,officialStatus,what,title:id,type:'R&S',sectors:[],kw:[],territory:[],expenses:[],fit:[],risks:[]});
+ c.grants=[
+   item('expired','2000-01-01','OPEN'),
+   item('exhausted',null,'CLOSED','Sportello sospeso per esaurimento risorse'),
+   item('active','2099-01-01','OPEN')
+ ];
+ vm.runInContext('render()',c);
+ const live=c.document.getElementById('grantGrid').innerHTML;
+ const archive=c.document.getElementById('archiveGrid').innerHTML;
+ assert.match(live,/detail\('active'\)/);
+ assert.doesNotMatch(live,/expired|exhausted/);
+ assert.match(archive,/Scaduto/);
+ assert.match(archive,/Fondi esauriti/);
+ c.document.getElementById('deadlineFilter').value='past';
+ vm.runInContext('render()',c);
+ assert.match(c.document.getElementById('archiveGrid').innerHTML,/detail\('expired'\)/);
+ assert.doesNotMatch(c.document.getElementById('archiveGrid').innerHTML,/exhausted/);
 });
