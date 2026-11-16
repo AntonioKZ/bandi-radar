@@ -81,3 +81,51 @@ body{font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased}
   color: #382800;
   font-weight: 700;
 }
+
+/* The source keeps a narrow color accent. Calls use color for operational status. */
+.provenance {
+  background: #f5f7fa;
+  color: #25344a;
+  border-left: 4px solid var(--origin);
+  padding: 8px 11px;
+}
+.provenance strong { font-size: 13px }
+.provenance-label { color: #526176 }
+.provenance-portal { color: #35465d }
+.score, .score.hi, .score.mid, .score.low {
+  background: #edf1f6;
+  color: #243750;
+}
+.decision-badge, .badge {
+  background: #eef1f5;
+  color: #38465a;
+}
+.grant-timing {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  margin-bottom: 8px;
+  font-size: 13px;
+  color: #3d4d62;
+}
+.call-state {
+  border-radius: 6px;
+  padding: 4px 8px;
+  background: #e9edf3;
+  color: #354358;
+  font-weight: 750;
+}
+.call-state-open { background: #e4f4ec; color: #12553d }
+.call-state-pending { background: #fff0cb; color: #684300 }
+.call-state-urgent { background: #fde9e7; color: #8a2423 }
+#archivio { background: #edf1f5 }
+#archivio .grant { box-shadow: none }
+.scan-indicator:not(.is-scanning) { border-color: transparent; padding-left: 0; color: #46566a }
+.preview-filters { grid-template-columns: minmax(0, 2fr) repeat(2, minmax(0, 1fr)) }
+.extra-filters { grid-column: 1 / -1 }
+.extra-filters summary { cursor: pointer; font-weight: 700; padding: 8px 0 }
+@media (max-width: 620px) {
+  .preview-filters { grid-template-columns: repeat(2, minmax(0, 1fr)) }
+  .preview-filters #q { grid-column: 1 / -1 }
+}
