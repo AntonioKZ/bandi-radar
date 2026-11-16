@@ -81,3 +81,15 @@ body{font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased}
   color: #382800;
   font-weight: 700;
 }
+
+
+.cards .card {
+  border-top: 3px solid var(--metric-accent, var(--line));
+  background: linear-gradient(145deg, var(--metric-tint, var(--panel)), var(--panel) 72%);
+}
+.cards .card .metric { color: var(--metric-accent, var(--ink)) }
+.cards .card:has(#best) { --metric-accent: #5840a0; --metric-tint: #f2edff }
+.cards .card:has(#total) { --metric-accent: #174da5; --metric-tint: #eaf2ff }
+.cards .card:has(#scanned) { --metric-accent: #126451; --metric-tint: #e7f6f0 }
+.cards .card:has(#newCount) { --metric-accent: #08647a; --metric-tint: #e5f5fa }
+.cards .card:has(#urgent) { --metric-accent: #8a4609; --metric-tint: #fff0dc }
