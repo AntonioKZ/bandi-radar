@@ -13,8 +13,9 @@ module.exports=async function handler(req,res){
  if(!secret)return res.status(503).json({error:'scan_secret_not_configured'});
  const expected=Buffer.from((manual?'RadarAdmin ':'Bearer ')+secret),actual=Buffer.from(auth);
  if(actual.length!==expected.length||!timingSafeEqual(actual,expected))return res.status(401).json({error:'unauthorized'});
- if(!process.env.DATABASE_URL)return res.status(503).json({error:'database_not_configured'});
- pool ||= new Pool({connectionString:process.env.DATABASE_URL,max:2,connectionTimeoutMillis:5000,idleTimeoutMillis:10000,statement_timeout:10000});
+ const connectionString=process.env.SCAN_DATABASE_URL||process.env.DATABASE_URL;
+ if(!connectionString)return res.status(503).json({error:'database_not_configured'});
+ pool ||= new Pool({connectionString,max:2,connectionTimeoutMillis:5000,idleTimeoutMillis:10000,statement_timeout:10000});
  let client,lease;
  try{
   client=await pool.connect();lease=await acquireLease(client);
