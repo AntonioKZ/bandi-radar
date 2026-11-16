@@ -9,3 +9,23 @@ test('high technical affinity alone never authorizes applying',()=>{const c=cont
 test('mentioning a decision in prose does not override assessment',()=>{const c=context();assert.notEqual(vm.runInContext("classify({what:'Non CANDIDARSI senza valutazione',program:'R&S',officialStatus:'OPEN',sectors:[],kw:[],territory:[]}).k",c),'CANDIDARSI')});
 test('more than 50 cards are deferred until requested',()=>{const c=context();c.grants=Array.from({length:70},(_,i)=>({id:'x'+i,title:'Bando '+i,what:'Da verificare',officialStatus:'REVIEW',type:'R&S',sectors:[],kw:[],territory:[],expenses:[],fit:[],risks:[]}));vm.runInContext('render()',c);const html=c.document.getElementById('grantGrid').innerHTML;assert.equal((html.match(/class="grant"/g)||[]).length,50);assert.match(html,/Mostra altre 50/)});
 test('source filter selects MIMIT and combines with keyword search',()=>{const c=context();const item=(id,sourceId,title)=>({id,sourceId,title,source:'Portale',what:'Da verificare',officialStatus:'REVIEW',type:'R&S',sectors:[],kw:[],territory:[],expenses:[],fit:[],risks:[]});c.grants=[item('a','mimit','Automotive'),item('b','invitalia','Automotive'),item('c','mimit','Energia')];c.document.getElementById('sourceFilter').value='mimit';c.document.getElementById('q').value='automotive';vm.runInContext('render()',c);const html=c.document.getElementById('grantGrid').innerHTML;assert.match(html,/detail\('a'\)/);assert.doesNotMatch(html,/detail\('b'\)|detail\('c'\)/);assert.equal(c.document.getElementById('resultCount').textContent,'1 opportunità trovate su 3');c.document.getElementById('sourceFilter').value='';vm.runInContext('render()',c);assert.match(c.document.getElementById('grantGrid').innerHTML,/detail\('b'\)/)});
+
+test('deadline order keeps missing dates at the end and supports rolling windows',()=>{
+ const c=context();
+ const item=(id,deadline)=>({id,deadline,title:'Bando '+id,what:'Da verificare',officialStatus:'REVIEW',type:'R&S',sectors:[],kw:[],territory:[],expenses:[],fit:[],risks:[]});
+ const today=vm.runInContext('todayInRome()',c);
+ const iso=days=>new Date(today+days*86400000).toISOString().slice(0,10);
+ c.grants=[item('missing',null),item('later',iso(31)),item('soon',iso(7)),item('past',iso(-1)),item('today',iso(0))];
+ const filter=c.document.getElementById('deadlineFilter');
+ const order=c.document.getElementById('deadlineOrder');
+ const ids=()=>{vm.runInContext('render()',c);return Array.from(c.document.getElementById('grantGrid').innerHTML.matchAll(/detail\('([^']+)'\)/g),match=>match[1]);};
+ order.value='earliest';
+ assert.deepEqual(ids(),['past','today','soon','later','missing']);
+ filter.value='7';
+ assert.deepEqual(ids(),['today','soon']);
+ filter.value='';
+ order.value='latest';
+ assert.deepEqual(ids(),['later','soon','today','past','missing']);
+ filter.value='unknown';
+ assert.deepEqual(ids(),['missing']);
+});
