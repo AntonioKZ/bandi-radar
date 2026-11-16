@@ -29,3 +29,16 @@ test('deadline order keeps missing dates at the end and supports rolling windows
  filter.value='unknown';
  assert.deepEqual(ids(),['missing']);
 });
+
+test('classifies Sicilian notices separately from funding and unverified candidates',()=>{
+ const c=context();
+ const kind=(title,officialStatus='REVIEW')=>{
+   c.sample={title,officialStatus};
+   return vm.runInContext('noticeKind(sample)',c);
+ };
+ assert.equal(kind('Avviso STEP - FAQ aggiornate al 31/08/2026'),'FAQ o chiarimenti');
+ assert.equal(kind('Approvazione graduatoria provvisoria Avviso Ripresa Sicilia Plus'),'Graduatoria o esito');
+ assert.equal(kind('Avviso STEP - proroga dei termini'),'Proroga o riapertura');
+ assert.equal(kind('OPEN INNOVATION SICILIA - Avvisi per la selezione'),'Segnalazione da verificare');
+ assert.equal(kind('Accordi per l’innovazione Automotive','OPEN'),'Bando o misura');
+});
