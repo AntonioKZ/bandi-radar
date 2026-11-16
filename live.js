@@ -1,9 +1,13 @@
-(async function loadRadar() {
-  const banner = document.createElement('div');
-  banner.id = 'live-status';
-  banner.setAttribute('role', 'status');
-  banner.style.cssText = 'padding:12px;margin:12px 0;border:1px solid #ccd5e1;border-radius:10px;font-size:13px';
-  document.querySelector('.top').after(banner);
+let liveBanner;
+async function loadRadar() {
+  if (!liveBanner) {
+    liveBanner = document.createElement('div');
+    liveBanner.id = 'live-status';
+    liveBanner.setAttribute('role', 'status');
+    liveBanner.style.cssText = 'padding:12px;margin:12px 0;border:1px solid #ccd5e1;border-radius:10px;font-size:13px';
+    document.querySelector('.top').after(liveBanner);
+  }
+  const banner = liveBanner;
   banner.textContent = 'Connessione ai dati Neon in corso…';
   const safeUrl = (v) => { try { const u = new URL(String(v)); return u.protocol === 'https:' ? u.href : '#'; } catch { return '#'; } };
   const safe = (v) => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -82,4 +86,5 @@
     grants=[];sourceRegistry=[];render();document.getElementById('sourcegrid').textContent='Stato delle fonti non disponibile.';banner.textContent = 'Database non raggiungibile: elenco non disponibile. Riprovare più tardi.';
     console.warn('live_radar_unavailable', e.message);
   }
-})();
+}
+loadRadar();

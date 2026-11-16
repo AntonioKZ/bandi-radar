@@ -14,11 +14,12 @@
     <section class="panel">
       <div class="eyebrow">BANDI RADAR MI</div>
       <h1>Scansione manuale</h1>
-      <p>Avvia un controllo di tutte le fonti ufficiali. Il risultato può richiedere fino a due minuti.</p>
+      <p>Sblocca la pagina con la chiave amministrativa. Per 30 minuti, riaprendo questa pagina si avvia automaticamente un controllo.</p>
       <form id="manual-scan">
         <p><label for="admin-key">Chiave amministrativa</label></p>
-        <input id="admin-key" type="password" autocomplete="current-password" maxlength="256" required>
+        <input id="admin-key" type="password" autocomplete="current-password" maxlength="256">
         <button id="scan-button" class="btn" type="submit">Avvia scansione</button>
+        <button id="retry-button" class="btn alt" type="submit">Riprova solo le fonti con errori</button>
       </form>
       <p id="scan-status" role="status"></p>
       <ul id="scan-results"></ul>

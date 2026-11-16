@@ -21,3 +21,20 @@ test('manual scans require POST and their dedicated key', async () => {
     if(expected===503)assert.equal(res.body.error,'scan_failed');
   }
 });
+
+test('manual session cookie supports automatic POST and rejects missing cookie',async()=>{
+ const fn=load(require.resolve('../api/cron/scan'),
+  {CRON_SECRET:'scheduled',RADAR_ADMIN_KEY:'manual'},
+  class{constructor(){throw Error('unexpected DB access');}});
+ const login=response();
+ let cookie;
+ login.setHeader=(name,value)=>{if(name==='Set-Cookie')cookie=value;};
+ await fn({method:'POST',headers:{authorization:'RadarAdmin manual'}},login);
+ assert.match(cookie,/HttpOnly; Secure; SameSite=Strict/);
+ const authenticated=response();
+ await fn({method:'POST',headers:{'x-radar-admin':'1',cookie:cookie.split(';')[0]}},authenticated);
+ assert.equal(authenticated.body.error,'database_not_configured');
+ const anonymous=response();
+ await fn({method:'POST',headers:{'x-radar-admin':'1'}},anonymous);
+ assert.equal(anonymous.code,401);
+});

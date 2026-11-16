@@ -69,3 +69,15 @@ body{font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased}
 .provenance-portal{flex-basis:100%;font-size:12px;line-height:1.45;overflow-wrap:anywhere}
 .provenance-mimit{--origin:#155b63}.provenance-eu{--origin:#163b80;border-left-color:#ffd64d}.provenance-invitalia{--origin:#783654}.provenance-sicilia{--origin:#83500c}.provenance-lombardia{--origin:#246144}
 @media(max-width:480px){.provenance{padding:10px 12px;gap:4px 8px}.provenance strong{font-size:14px}}
+
+.scan-indicator {
+  padding: .8rem 1rem;
+  border: 1px solid #b6c6d8;
+  border-radius: .65rem;
+}
+.scan-indicator.is-scanning {
+  background: #fff2c2;
+  border-color: #ad7900;
+  color: #382800;
+  font-weight: 700;
+}

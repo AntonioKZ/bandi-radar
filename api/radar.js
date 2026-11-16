@@ -17,6 +17,12 @@ module.exports = async (req, res) => {
   const client = db();
   if (!client) return res.status(503).json({ error: 'database_not_configured' });
   try {
+    if(req.query?.scanStatus==='1'){
+      const result=await client.query(`SELECT id,started_at,finished_at,status,inserted,
+        (status='running' AND started_at>now()-interval '4 minutes') AS active
+        FROM scan_runs WHERE source_id IS NULL ORDER BY started_at DESC,id DESC LIMIT 1`);
+      return res.status(200).json({scan:result.rows[0]||null});
+    }
     const [opportunities, sources, scans, history] = await Promise.all([
       client.query('SELECT id, source_id, title, official_url, territory, deadline, status, budget_eur, grant_rate, program, summary, sectors, keywords, first_seen_at, last_seen_at FROM opportunities ORDER BY id LIMIT 501 OFFSET $1', [offset]),
       client.query('SELECT id, name, scope, official_url, category, scan_status, priority, updated_at FROM sources ORDER BY priority NULLS LAST, name'),
