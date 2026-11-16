@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>Scansione manuale · Bandi Radar MI</title>
+  <link rel="stylesheet" href="/styles.css">
+  <script src="/admin.js" defer></script>
+</head>
+<body>
+  <main class="wrap">
+    <p><a href="/#fonti">Torna allo stato delle fonti</a></p>
+    <section class="panel">
+      <div class="eyebrow">BANDI RADAR MI</div>
+      <h1>Scansione manuale</h1>
+      <p>Avvia un controllo di tutte le fonti ufficiali. Il risultato può richiedere fino a due minuti.</p>
+      <form id="manual-scan">
+        <p><label for="admin-key">Chiave amministrativa</label></p>
+        <input id="admin-key" type="password" autocomplete="current-password" maxlength="256" required>
+        <button id="scan-button" class="btn" type="submit">Avvia scansione</button>
+      </form>
+      <p id="scan-status" role="status"></p>
+      <ul id="scan-results"></ul>
+    </section>
+  </main>
+</body>
+</html>
